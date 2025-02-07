@@ -1,3 +1,18 @@
+--  create table script
+
+CREATE TABLE IF NOT EXISTS Product (
+    ProductId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Description TEXT,
+    Price DECIMAL(10,2) NOT NULL,
+    Image VARCHAR(255),
+    CategoryId INT NOT NULL,
+    FOREIGN KEY (CategoryId) REFERENCES Category(CategoryId) ON DELETE CASCADE
+);
+
+
+-- insert script
+
 INSERT INTO public.product (productid, name, description, price, image, categoryid)
 VALUES
     (1, 'Boat Headphone', 'High-quality Boat headphone', 120, 'p-1.jpg', 2),
