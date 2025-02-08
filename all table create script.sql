@@ -1,119 +1,66 @@
+-- Users table (Referenced in Cart)
+CREATE TABLE Users (
+    UserId SERIAL PRIMARY KEY,
+    Fname VARCHAR(50) NOT NULL,
+    Lname VARCHAR(50) NOT NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    MoNumber VARCHAR(15) UNIQUE NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    Address TEXT
+);
 
-user table
+-- Cart table
+CREATE TABLE Cart (
+    CartId SERIAL PRIMARY KEY,
+    UserId INT NOT NULL,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
+);
 
-CREATE TABLE IF NOT EXISTS public.users
-(
-    userid integer NOT NULL DEFAULT nextval('users_userid_seq'::regclass),
-    fname text COLLATE pg_catalog."default" NOT NULL,
-    lname character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    email character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    monumber character varying(15) COLLATE pg_catalog."default" NOT NULL,
-    password character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    address text COLLATE pg_catalog."default",
-    CONSTRAINT users_pkey PRIMARY KEY (userid),
-    CONSTRAINT users_email_key UNIQUE (email),
-    CONSTRAINT users_monumber_key UNIQUE (monumber)
-)
+-- Product table
+CREATE TABLE Product (
+    ProductId SERIAL PRIMARY KEY,
+    Name VARCHAR(100) NOT NULL,
+    Description TEXT,
+    Price DECIMAL(10,2) NOT NULL,
+    Image VARCHAR(255),
+    CategoryId INT NOT NULL,
+    FOREIGN KEY (CategoryId) REFERENCES Category(CategoryId) ON DELETE CASCADE
+);
 
+-- Category table (since Product references it)
+CREATE TABLE Category (
+    CategoryId SERIAL PRIMARY KEY,
+    Name VARCHAR(50) NOT NULL
+);
 
-product table
-
-CREATE TABLE IF NOT EXISTS public.product
-(
-    productid integer NOT NULL DEFAULT nextval('product_productid_seq'::regclass),
-    name character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    description text COLLATE pg_catalog."default",
-    price numeric(10,2) NOT NULL,
-    image character varying(255) COLLATE pg_catalog."default",
-    categoryid integer NOT NULL,
-    CONSTRAINT product_pkey PRIMARY KEY (productid),
-    CONSTRAINT product_categoryid_fkey FOREIGN KEY (categoryid)
-        REFERENCES public.category (categoryid) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-)
-
-
-orders table
-
-CREATE TABLE IF NOT EXISTS public.orders
-(
-    orderid integer NOT NULL DEFAULT nextval('orders_orderid_seq'::regclass),
-    userid integer NOT NULL,
-    orderdate timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    status character varying(20) COLLATE pg_catalog."default" NOT NULL,
-    amount numeric(10,2) NOT NULL,
-    CONSTRAINT orders_pkey PRIMARY KEY (orderid),
-    CONSTRAINT orders_userid_fkey FOREIGN KEY (userid)
-        REFERENCES public.users (userid) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE,
-    CONSTRAINT orders_status_check CHECK (status::text = ANY (ARRAY['Pending'::character varying, 'Shipped'::character varying, 'Delivered'::character varying, 'Cancelled'::character varying]::text[]))
-)
+-- CartItem table (Many-to-Many relationship between Cart and Product)
+CREATE TABLE CartItem (
+    CartItemId SERIAL PRIMARY KEY,
+    CartId INT NOT NULL,
+    ProductId INT NOT NULL,
+    Qty INT NOT NULL CHECK (Qty > 0),
+    FOREIGN KEY (CartId) REFERENCES Cart(CartId) ON DELETE CASCADE,
+    FOREIGN KEY (ProductId) REFERENCES Product(ProductId) ON DELETE CASCADE
+);
 
 
-orderitem table
+-- Order table
+CREATE TABLE Orders (
+    OrderId SERIAL PRIMARY KEY,
+    UserId INT NOT NULL,
+    OrderDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Status VARCHAR(20) CHECK (Status IN ('Pending', 'Shipped', 'Delivered', 'Cancelled')) NOT NULL,
+    Amount DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
+);
 
-CREATE TABLE IF NOT EXISTS public.orderitem
-(
-    orderitemid integer NOT NULL DEFAULT nextval('orderitem_orderitemid_seq'::regclass),
-    orderid integer NOT NULL,
-    productid integer NOT NULL,
-    qty integer NOT NULL,
-    price numeric(10,2) NOT NULL,
-    CONSTRAINT orderitem_pkey PRIMARY KEY (orderitemid),
-    CONSTRAINT orderitem_orderid_fkey FOREIGN KEY (orderid)
-        REFERENCES public.orders (orderid) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE,
-    CONSTRAINT orderitem_productid_fkey FOREIGN KEY (productid)
-        REFERENCES public.product (productid) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE,
-    CONSTRAINT orderitem_qty_check CHECK (qty > 0)
-)
-
-category table
-
-CREATE TABLE IF NOT EXISTS public.category
-(
-    categoryid integer NOT NULL DEFAULT nextval('category_categoryid_seq'::regclass),
-    name character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    CONSTRAINT category_pkey PRIMARY KEY (categoryid)
-)
-
-
-cartitem table
-
-CREATE TABLE IF NOT EXISTS public.cartitem
-(
-    cartitemid integer NOT NULL DEFAULT nextval('cartitem_cartitemid_seq'::regclass),
-    cartid integer NOT NULL,
-    productid integer NOT NULL,
-    qty integer NOT NULL,
-    CONSTRAINT cartitem_pkey PRIMARY KEY (cartitemid),
-    CONSTRAINT cartitem_cartid_fkey FOREIGN KEY (cartid)
-        REFERENCES public.cart (cartid) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE,
-    CONSTRAINT cartitem_productid_fkey FOREIGN KEY (productid)
-        REFERENCES public.product (productid) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE,
-    CONSTRAINT cartitem_qty_check CHECK (qty > 0)
-)
-
-
-cart table
-
-CREATE TABLE IF NOT EXISTS public.cart
-(
-    cartid integer NOT NULL DEFAULT nextval('cart_cartid_seq'::regclass),
-    userid integer NOT NULL,
-    CONSTRAINT cart_pkey PRIMARY KEY (cartid),
-    CONSTRAINT cart_userid_fkey FOREIGN KEY (userid)
-        REFERENCES public.users (userid) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE CASCADE
-)
-
+-- OrderItem table
+CREATE TABLE OrderItem (
+    OrderItemId SERIAL PRIMARY KEY,
+    OrderId INT NOT NULL,
+    ProductId INT NOT NULL,
+    Qty INT NOT NULL CHECK (Qty > 0),
+    Price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (OrderId) REFERENCES Orders(OrderId) ON DELETE CASCADE,
+    FOREIGN KEY (ProductId) REFERENCES Product(ProductId) ON DELETE CASCADE
+);
