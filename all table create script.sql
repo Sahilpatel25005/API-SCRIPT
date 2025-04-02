@@ -16,6 +16,12 @@ CREATE TABLE Cart (
     FOREIGN KEY (UserId) REFERENCES Users(UserId) ON DELETE CASCADE
 );
 
+-- Category table (since Product references it)
+CREATE TABLE Category (
+    CategoryId SERIAL PRIMARY KEY,
+    Name VARCHAR(50) NOT NULL
+);
+
 -- Product table
 CREATE TABLE Product (
     ProductId SERIAL PRIMARY KEY,
@@ -25,12 +31,6 @@ CREATE TABLE Product (
     Image VARCHAR(255),
     CategoryId INT NOT NULL,
     FOREIGN KEY (CategoryId) REFERENCES Category(CategoryId) ON DELETE CASCADE
-);
-
--- Category table (since Product references it)
-CREATE TABLE Category (
-    CategoryId SERIAL PRIMARY KEY,
-    Name VARCHAR(50) NOT NULL
 );
 
 -- CartItem table (Many-to-Many relationship between Cart and Product)
